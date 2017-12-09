@@ -1,0 +1,234 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/static/css/main.bfbdc369.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <title>A take on don&#39;t repeat yourself</title>
+
+  <meta charset="utf-8" />
+  <meta name="frozen at" content="2017-12-09T11:58:11.325372" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/atom+xml"
+      href="/atom.xml" title="javier.gr blog feed" />
+  
+  
+  
+  
+
+  
+    <meta name="description" contents="DRY means yourself and not only code." />
+  
+
+  
+
+
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+<script>
+window.addEventListener("load", function(){
+  window.cookieconsent.initialise({
+    palette: {
+      popup: {
+        background: "#009a97",
+        text: "#fff"
+      },
+      button: {
+        background: "#eaeaea",
+        text: "#000"
+      },
+    },
+    content: {
+      message: "This website use tracking cookies for visitor analytics"
+    }
+  });
+});
+</script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-2528134-1', 'auto');
+    ga('send', 'pageview');
+  
+  </script>
+</head>
+
+<body>
+  <header class="main-header">
+    <div class="container">
+      <h2 class="header-title">
+        <a href="/">Javier Gonel</a>
+      </h2>
+      <nav>
+        <ul class="nav">
+          <li >
+            <a href="/about/">About</a>
+          </li>
+          <li  class="active">
+            <a href="/blog/">Blog</a>
+          </li>
+          <li>
+            <a href="/atom.xml"><i class="fa fa-rss"></i></a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="container main-area">
+    
+<section class="h-entry">
+  <header>
+    <h1 class="p-name entry-title">A take on don&#39;t repeat yourself</h1>
+    <time pdatetime="2014-03-22">
+      <i class="glyphicon glyphicon-calendar"></i>
+      Sat 22 March 2014
+    </time>
+  </header>
+  <article class="e-content entry-content">
+    <p>“Don't repeat yourself” is a software development principle (big words) that
+tells us to avoid repetition of <em>information of all kinds</em> in a software
+system. It means yourself, but many times it is used only for code.</p>
+<p>Some days ago I stumbled upon a <a href="http://www.justinweiss.com/blog/2014/02/28/i-dry-ed-up-my-code-and-now-its-hard-to-work-with-what-happened/">nice article</a> by
+<a href="https://twitter.com/justinweiss">@justinweiss</a> about how DRY can go wrong in your code.
+Really good examples but only focused on code and leaving aside the <em>yourself</em>
+part and not using other software development principles to balance the
+excessive use of only one. Like the <em>every problem is a nail when you only have
+a hammer</em> motto. The first two that came to my mind were:</p>
+<ul>
+<li><a href="http://blog.codinghorror.com/the-last-responsible-moment/">Last responsible moment</a></li>
+<li><a href="http://skillcrush.com/2012/08/24/pareto-principle/">Pareto principle</a></li>
+</ul>
+<p>But let's start with the Y in DRY.</p>
+<h2>Don't repeat yourself - code</h2>
+<p><em>Try to avoid duplication on information of all kinds</em>. When I look at code as
+a bunch of lines, I might see "string duplication", where a bunch of lines of
+code are the same in two parts of the application. There are some tools that
+will help you to find them (For example pylint in python). But when code is
+<em>information</em>, that piece of knowledge:</p>
+<ul>
+<li>It might have the same character representation as another piece of totally
+  different knowledge.</li>
+<li>It might be the same information as another piece of code with totally different
+  implementation.</li>
+</ul>
+<p>For <strong>example</strong>: In a simple API client, one can be tempted to include some
+constants used in the server part of the API, even from the database.  Yes, the
+strings are the same, but the meaning is different: one talks about the
+language used when communicating with the server, and the other tells you what
+you will find in your database.</p>
+<p>Perhaps you've implemented the one method time ago, with a different amount of
+knowledge, thus it looks totally different from the one you're writing now and
+you might not remember the old one.</p>
+<h2>Don't repeat yourself - !code</h2>
+<p>Knowledge is not only code, you might find repeated knowledge:</p>
+<ul>
+<li>In superfluous documentation.</li>
+<li>In duplicated small libraries implemented in many teams inside the same big dev team.</li>
+<li>In how you <strong>do</strong> things like deployment, code versions, testing.</li>
+<li>In the communication with your team: endless meetings saying the same again and again anyone?</li>
+</ul>
+<h2>Last responsible moment</h2>
+<p>The <a href="http://blog.codinghorror.com/the-last-responsible-moment/">last responsible moment</a> tells us to “delay commitment until the
+moment at which failing to make a decision eliminates an important
+alternative”.  (Mary and Tom <a href="http://www.poppendieck.com">Poppendieck</a>, Lean Software Development: An Agile
+Toolkit).</p>
+<p>Right now, do you have all the information you need to remove a duplication? If
+you don't remove the duplication now, will something bad happen tomorrow?</p>
+<p>For <strong>example</strong>: when you're developing a new subsystem in your application,
+some code might start to appear as "it is doing the
+same thing", you know you have another sprint and a half with this new
+subsystem, so you can wait till the subsystem is finished to take a look and
+refactor (red, green, next step refactor). Here you might have repeated
+yourself 5 times, and still you know it is not time to refactor.</p>
+<p>You might be just adding a feature to that subsystem after it has been
+finished. You “do your thing” with surgical precision and you add your extra
+bunch of tools to help you do accomplish your task. But, did you know that some
+or all of these tools are in the subsystem? Perhaps they're small tools that
+you've never stumbled upon, even if the internal API is well documented. In a
+code review, or during a pair programming session, your coworker might point
+you to them and you will use them. You might refactor them a bit to make them
+more visible. Here a  <strong>second</strong> time was enough.</p>
+<h2>The team issue.</h2>
+<p>When working in teams, that <em>second time</em> for you might be the 6th time for the
+team. You might not even get a "second repetition" and do the same once per
+team member. You could write down some guidelines to help team
+members to find the knowledge they're looking for and avoid “invent
+everything”, because they won't see the “third time” in order to refactor.</p>
+<h2>Pareto principle.</h2>
+<p>The pareto principle states that 80% of the effects come from 20% of the
+causes. In our case, we can achieve 80% of DRY with 20% of effort. Does the
+other 20% of DRY deserve the rest of the effort? Again no golden rule :(. This
+depends on the issue at hand, the project, the status of the project at the
+very moment of taking the decision.</p>
+<p>Many times the effort removing duplicated information is small, because we were
+able to say that "if we don't do it now, tomorrow it will be late". You might
+know that each sub-team in a big engineering team, have developed their own way
+to deploy an application. They all do it almost in the same way with their
+personal touch of spice. Can your engineering team tackle that issue now? 80/20
+principle.</p>
+<h2>Summary</h2>
+<p>Applying only one principle might not be a good idea. There is more to software
+principles than meet the eye you can use in your advantage.</p>
+<p><img alt="transformers" src="/blog/2014/03/a-take-on-dry/more.than.meets.the.eye.jpg" title="More than meets the eye" /></p>
+  </article>
+  <hr class="big-divider" />
+  
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_shortname = 'javiergr';
+var disqus_identifier = "2014/03/a-take-on-dry";
+var disqus_title = "A take on don\u0027t repeat yourself";
+var disqus_url = "http://javier.gr/blog/2014/03/a-take-on-dry/";
+
+/* * * DON'T EDIT BELOW THIS LINE * * */
+(function() {
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript'; 
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>
+  Please enable JavaScript to view the 
+  <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+<a href="http://disqus.com" class="dsq-brlink">
+  comments powered by
+  <span class="logo-disqus">Disqus</span>
+</a>
+
+
+</section>
+
+  </div>
+  <footer class="main-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-6">
+          <h2>Contact me</h2>
+          <ul>
+            <li>E-Mail: <a href="mailto:bolibic@gmail.com">bolibic@gmail.com</a></li>
+            <li>Twitter: <a href="https://twitter.com/graffic">@graffic</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-6">
+          <p>Copyright © Javier Gonel 2013</p>
+          <p>Proudly powered by:</p>
+          <ul>
+            <li><a href="http://python.org">Python 3</a></li>
+            <li><a href="http://flask.pocoo.org/">Flask</a></li>
+            <li><a href="http://getbootstrap.com/">Bootstrap 3</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer><!-- /#contentinfo -->
+</body>
+
+</html>

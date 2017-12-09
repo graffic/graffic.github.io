@@ -1,0 +1,221 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/static/css/main.bfbdc369.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <title>Python reference leaks and objgraph</title>
+
+  <meta charset="utf-8" />
+  <meta name="frozen at" content="2017-12-09T11:58:11.270230" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/atom+xml"
+      href="/atom.xml" title="javier.gr blog feed" />
+  
+  
+  
+  
+
+  
+    <meta name="description" contents="Finding reference leaks in python code using objgraph" />
+  
+
+  
+
+
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+<script>
+window.addEventListener("load", function(){
+  window.cookieconsent.initialise({
+    palette: {
+      popup: {
+        background: "#009a97",
+        text: "#fff"
+      },
+      button: {
+        background: "#eaeaea",
+        text: "#000"
+      },
+    },
+    content: {
+      message: "This website use tracking cookies for visitor analytics"
+    }
+  });
+});
+</script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-2528134-1', 'auto');
+    ga('send', 'pageview');
+  
+  </script>
+</head>
+
+<body>
+  <header class="main-header">
+    <div class="container">
+      <h2 class="header-title">
+        <a href="/">Javier Gonel</a>
+      </h2>
+      <nav>
+        <ul class="nav">
+          <li >
+            <a href="/about/">About</a>
+          </li>
+          <li  class="active">
+            <a href="/blog/">Blog</a>
+          </li>
+          <li>
+            <a href="/atom.xml"><i class="fa fa-rss"></i></a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="container main-area">
+    
+<section class="h-entry">
+  <header>
+    <h1 class="p-name entry-title">Python reference leaks and objgraph</h1>
+    <time pdatetime="2014-04-02">
+      <i class="glyphicon glyphicon-calendar"></i>
+      Wed 02 April 2014
+    </time>
+  </header>
+  <article class="e-content entry-content">
+    <p>Yesterday I was having problems with some open connections stored in python
+objects that should have been garbage collected. For some strange reason, the
+objects created were referenced <em>somewhere</em> and my task was to find exactly
+<strong>where</strong>.</p>
+<h2>Finding the problem in my code</h2>
+<p>My first step was to find what piece of code was triggering the problem. The
+good part was that the problem was being triggered by functional/end to end
+tests. After a number of tests, the test runner was freezing. We use
+<a href="http://pytest.org/latest/">py.test</a>, so I used the <code>--full-trace</code> flag to show a full stack trace
+on <code>Control-C</code>.</p>
+<p>After seeing the full stack trace, I understood that the code was having a
+problem opening new connections. As my <code>ulimit</code> is usually low, I confirmed
+with my <a href="https://www.rabbitmq.com/">RabbitMQ</a> server that it ran out of connections, thus
+clients were left blocked waiting.</p>
+<h2>Debugging</h2>
+<p>I jumped into the place where my code was calling the method that was hanging
+the test runner. I added a global <strong>counter</strong> to see when I should fire pdb:
+print its value in each iteration, wait the code to hang and add an condition
+to start <a href="https://docs.python.org/2/library/pdb.html">pdb</a> right before it blocks. Now how could I find the
+<strong>object</strong> that isn't being collected?</p>
+<p>Thanks to the counter I knew how many times I've called that piece of code and
+how many objects I should expect to find. Using <a href="http://mg.pov.lt/objgraph/">objgraph</a> I could find how many
+objects of a class where in the system. Taking into account the original
+stack trace you can have some candidates.</p>
+<div class="codehilite"><pre><span></span>(Pdb) objgraph.count(&quot;Celery&quot;)
+138
+(Pdb) objgraph.count(&quot;TCPTransport&quot;)
+137
+</pre></div>
+
+
+<h2>References</h2>
+<p>Objgraph allows you to find references and to draw references (using
+<a href="http://www.graphviz.org/">graphviz</a>).  The first guide you will see in their documentation is
+to take one random object and find a chain of references from a module to that
+object. Modules are a good place for globals and globals might keep references
+to objects that shouldn't be there in the first place.</p>
+<div class="codehilite"><pre><span></span>(Pdb) objgraph.show_chain(objgraph.find_backref_chain(objgraph.by_type(&quot;TCPTransport&quot;)[5], objgraph.is_proper_module))
+Graph written to /tmp/.../objgraph-6JEOw4.dot (19 nodes)
+Graph viewer (xdot) not found, generating a png instead
+Image generated as /tmp/.../objgraph-6JEOw4.png
+</pre></div>
+
+
+<p><img alt="objgraph multiprocess" src="/blog/2014/04/python-reference-leaks-and-objgraph/objgraph.multiprocess.png" title="Objgraph showing the multiprocess leak" /></p>
+<p>So somewhere in the code, a reference is added in a <strong>global</strong> inside the
+multiprocessing module. But after removing that, I still had problems and the
+defaults from objgraph weren't helping.</p>
+<div class="codehilite"><pre><span></span>(Pdb) objgraph.show_chain(objgraph.find_backref_chain(objgraph.by_type(&quot;TCPTransport&quot;)[5], objgraph.is_proper_module))
+Graph written to /tmp/.../objgraph-sWp8r6.dot (1 nodes)
+Graph viewer (xdot) not found, generating a png instead
+Image generated as /tmp/.../objgraph-sWp8r6.png
+</pre></div>
+
+
+<p><img alt="objgraph one" src="/blog/2014/04/python-reference-leaks-and-objgraph/objgraph.one.png" title="Objgraph showing one node" /></p>
+<p>One node only? I need to widen the search with the <code>max_depth</code> parameter to
+find the last leak.</p>
+<div class="codehilite"><pre><span></span>(Pdb) objgraph.show_chain(objgraph.find_backref_chain(objgraph.by_type(&quot;TCPTransport&quot;)[5], objgraph.is_proper_module, max_depth=50))
+Graph written to /tmp/.../objgraph-uMU0Tr.dot (23 nodes)
+Graph viewer (xdot) not found, generating a png instead
+Image generated as /tmp/.../objgraph-uMU0Tr.png
+</pre></div>
+
+
+<p><img alt="objgraph backends" src="/blog/2014/04/python-reference-leaks-and-objgraph/objgraph.backends.png" title="Backends module keeping a reference" /></p>
+<h2>Summary</h2>
+<p>This report was posted in the <a href="https://github.com/celery/celery/issues/1949">celery issue tracker</a> and the issue
+was fixed.  Kudos for the celery team and specially to <a href="https://github.com/ask">Ask Solem</a>
+for fixing the problem. Also note that you might find problems with big amounts
+of objects as my friend <a href="https://twitter.com/jcea/status/451315838713614336">@jcea told me</a>. Although in this specific case,
+objgraph helped a lot.</p>
+  </article>
+  <hr class="big-divider" />
+  
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_shortname = 'javiergr';
+var disqus_identifier = "2014/04/python-reference-leaks-and-objgraph";
+var disqus_title = "Python reference leaks and objgraph";
+var disqus_url = "http://javier.gr/blog/2014/04/python-reference-leaks-and-objgraph/";
+
+/* * * DON'T EDIT BELOW THIS LINE * * */
+(function() {
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript'; 
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>
+  Please enable JavaScript to view the 
+  <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+<a href="http://disqus.com" class="dsq-brlink">
+  comments powered by
+  <span class="logo-disqus">Disqus</span>
+</a>
+
+
+</section>
+
+  </div>
+  <footer class="main-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-6">
+          <h2>Contact me</h2>
+          <ul>
+            <li>E-Mail: <a href="mailto:bolibic@gmail.com">bolibic@gmail.com</a></li>
+            <li>Twitter: <a href="https://twitter.com/graffic">@graffic</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-6">
+          <p>Copyright © Javier Gonel 2013</p>
+          <p>Proudly powered by:</p>
+          <ul>
+            <li><a href="http://python.org">Python 3</a></li>
+            <li><a href="http://flask.pocoo.org/">Flask</a></li>
+            <li><a href="http://getbootstrap.com/">Bootstrap 3</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer><!-- /#contentinfo -->
+</body>
+
+</html>

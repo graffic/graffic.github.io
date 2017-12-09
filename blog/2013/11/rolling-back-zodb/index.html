@@ -1,0 +1,295 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/static/css/main.bfbdc369.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <title>Rolling back a transaction in ZODB</title>
+
+  <meta charset="utf-8" />
+  <meta name="frozen at" content="2017-12-09T11:58:10.878787" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/atom+xml"
+      href="/atom.xml" title="javier.gr blog feed" />
+  
+  
+  
+  
+
+  
+    <meta name="description" contents="Different ways to roll back a transaction in ZODB using file storage." />
+  
+
+  
+
+
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+<script>
+window.addEventListener("load", function(){
+  window.cookieconsent.initialise({
+    palette: {
+      popup: {
+        background: "#009a97",
+        text: "#fff"
+      },
+      button: {
+        background: "#eaeaea",
+        text: "#000"
+      },
+    },
+    content: {
+      message: "This website use tracking cookies for visitor analytics"
+    }
+  });
+});
+</script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-2528134-1', 'auto');
+    ga('send', 'pageview');
+  
+  </script>
+</head>
+
+<body>
+  <header class="main-header">
+    <div class="container">
+      <h2 class="header-title">
+        <a href="/">Javier Gonel</a>
+      </h2>
+      <nav>
+        <ul class="nav">
+          <li >
+            <a href="/about/">About</a>
+          </li>
+          <li  class="active">
+            <a href="/blog/">Blog</a>
+          </li>
+          <li>
+            <a href="/atom.xml"><i class="fa fa-rss"></i></a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="container main-area">
+    
+<section class="h-entry">
+  <header>
+    <h1 class="p-name entry-title">Rolling back a transaction in ZODB</h1>
+    <time pdatetime="2013-11-21">
+      <i class="glyphicon glyphicon-calendar"></i>
+      Thu 21 November 2013
+    </time>
+  </header>
+  <article class="e-content entry-content">
+    <p>In my case I needed this after a “bad upgrade”. I had run some model
+migrations in the wrong environment and I only needed to remove those
+changes from the database file (Data.fs) after rolling back the code.</p>
+<p>I found two ways of doing it:</p>
+<ul>
+<li>Cut the file: no python code needed but it only works if you want to
+    remove the last transaction/s.</li>
+<li>Create a rollback transaction: this will revert the effects of the
+    transaction you want.</li>
+</ul>
+<p>In any case:</p>
+<ul>
+<li>Keep a backup of your database.</li>
+<li>Shut down your web application and your ZEO server if any.</li>
+</ul>
+<h2>Cut the file</h2>
+<p>Locate the <code>Data.fs</code> file and use <code>fstail</code> or <code>fsdump</code> to get the
+location of the last transaction. Let's see this with an example of a
+file with two transactions:</p>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> fsdump Data.fs
+<span class="go">Trans #00000 tid=03a298991c976744 time=2013-11-07 11:05:06.701114 offset=52</span>
+<span class="go">    status=&#39; &#39; user=&#39;&#39; description=&#39;initial database creation&#39;</span>
+<span class="go">  data #00000 oid=0000000000000000 size=60 class=persistent.mapping.PersistentMapping</span>
+<span class="go">Trans #00001 tid=03a298caaa5ae600 time=2013-11-07 11:54:39.926970 offset=185</span>
+<span class="go">    status=&#39; &#39; user=&#39;&#39; description=&#39;&#39;</span>
+<span class="go">  data #00000 oid=0000000000000000 size=94 class=persistent.mapping.PersistentMapping</span>
+<span class="go">  data #00001 oid=0000000000000001 size=42 class=__main__.Fruit</span>
+<span class="gp">$</span> fstail Data.fs
+<span class="go">2013-11-07 11:54:39.926970: hash=0f95c4915219251e73bc66ccdd6bb0376ecae064</span>
+<span class="go">user=&#39;&#39; description=&#39;&#39; length=243 offset=185</span>
+
+<span class="go">2013-11-07 11:05:06.701114: hash=5c3a287923922c3540eb32ca95d926d52a7843da</span>
+<span class="go">user=&#39;&#39; description=&#39;initial database creation&#39; length=150 offset=52</span>
+</pre></div>
+
+
+<p>The important part here is the <em>offset</em>. It tells us where the
+transaction data starts. There is a header that usually is <em>23 bytes</em>
+but it can be longer if there is meta-data like: description, user or status.
+ZODB will clean that extra header for us. Let's cut the <code>Data.fs</code> file:</p>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> head -c <span class="m">185</span> Data.fs &gt; NewData.fs
+<span class="gp">$</span> ls -l NewData*
+<span class="go">-rw-r--r-- 1  hey jude 185 Nov 21 10:06 NewData.fs</span>
+</pre></div>
+
+
+<p>Now you can rename the <code>NewData.fs</code> as <code>Data.fs</code>, delete the <code>Data.fs.index</code> to
+make sure it is regenerated on restart and start your application.
+Another alternative is to use python code to load the storage and make
+ZODB fix the file for you. In both cases you will get the following files</p>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> ls -l NewData*
+<span class="go">-rw-r--r--  1 hey  jude  162 Nov 21 10:08 Data.fs</span>
+<span class="go">-rw-r--r--  1 hey  jude   30 Nov 21 10:08 Data.fs.index</span>
+<span class="go">-rw-r--r--  1 hey  jude    6 Nov 21 10:08 Data.fs.lock</span>
+<span class="go">-rw-r--r--  1 hey  jude    0 Nov 21 10:08 Data.fs.tmp</span>
+<span class="go">-rw-r--r--  1 hey  jude   23 Nov 21 10:08 Data.fs.tr0</span>
+</pre></div>
+
+
+<p>The <code>tr0</code> file is the transaction header for the transaction we've
+removed. The new file size has been adjusted from 185 bytes to 162 bytes
+and the index has been generated. Now <code>fsdump</code> and <code>fstail</code> show
+only one transaction:</p>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> fsdump Data.fs
+<span class="go">Trans #00000 tid=03a298991c976744 time=2013-11-07 11:05:06.701114 offset=52</span>
+<span class="go">    status=&#39; &#39; user=&#39;&#39; description=&#39;initial database creation&#39;</span>
+<span class="go">  data #00000 oid=0000000000000000 size=60 class=persistent.mapping.PersistentMapping</span>
+<span class="gp">$</span> fstail NewData.fs
+<span class="go">2013-11-07 11:05:06.701114: hash=5c3a287923922c3540eb32ca95d926d52a7843da</span>
+<span class="go">user=&#39;&#39; description=&#39;initial database creation&#39; length=150 offset=52</span>
+</pre></div>
+
+
+<p>That's it but check your application just in case.</p>
+<h2>Create a rollback transaction</h2>
+<p>To rollback a transaction we need to find the transaction id. But not
+just the id, but the id encoded in <em>base64</em>.</p>
+<p>If you use <code>fsdump</code> or <code>fstail</code> to locate your transaction you have
+that transaction id in front of you. Using the <code>Data.fs</code> file of the
+previous example. In this case I want to roll back the last transaction
+that has this id <code>03a298caaa5ae600</code>:</p>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">base64</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="s1">&#39;03a298caaa5ae600&#39;</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;hex&#39;</span><span class="p">))</span>
+<span class="go">&#39;A6KYyqpa5gA=&#39;</span>
+</pre></div>
+
+
+<p>If you only know that a specific object has been changed, we can get
+the id from the database. We need some python here. I will be using the
+previous <code>Data.fs</code> and let's say that the object changed is the root:</p>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">ZODB.FileStorage</span> <span class="kn">import</span> <span class="n">FileStorage</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">ZODB.DB</span> <span class="kn">import</span> <span class="n">DB</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">storage</span> <span class="o">=</span> <span class="n">FileStorage</span><span class="p">(</span><span class="s1">&#39;Data.fs&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">db</span> <span class="o">=</span> <span class="n">DB</span><span class="p">(</span><span class="n">storage</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">con</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">open</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">db</span><span class="o">.</span><span class="n">history</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">root</span><span class="p">()</span><span class="o">.</span><span class="n">_p_oid</span><span class="p">)</span>
+<span class="go">[{&#39;tid&#39;: &#39;\x03\xa2\x98\x9b\x1f\x19e\xbb&#39;, &#39;time&#39;: 1383822427.288877,</span>
+<span class="go">  &#39;user_name&#39;: &#39;&#39;, &#39;description&#39;: &#39;&#39;, &#39;size&#39;: 94}]</span>
+</pre></div>
+
+
+<p>With this information I can get the transaction id from the <code>undoLog</code>
+using the <code>undoInfo</code> method and the <em>time</em> when the object was
+updated:</p>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">info</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">undoInfo</span><span class="p">(</span><span class="n">specification</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;time&#39;</span><span class="p">:</span> <span class="mf">1383822427.288877</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">info</span>
+<span class="go">[{&#39;description&#39;: &#39;&#39;, &#39;size&#39;: 243, &#39;user_name&#39;: &#39;&#39;, &#39;id&#39;: &#39;A6KYmx8ZZbs=&#39;,</span>
+<span class="go">  &#39;time&#39;: 1383822427.288877}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">db</span><span class="o">.</span><span class="n">undo</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">transaction</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">transaction</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="o">.</span><span class="n">note</span><span class="p">(</span><span class="s1">&#39;Rolling back!&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">transaction</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">storage</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+
+
+<p>After committing these changes we can check the <code>Data.fs</code> file with
+<code>fsdump</code> to see a new transaction that reverses the one we wanted to
+rollback:</p>
+<div class="codehilite"><pre><span></span><span class="gp">$</span> fsdump Data.fs
+<span class="go">Trans #00000 tid=03a298991c976744 time=2013-11-07 11:05:06.701114 offset=52</span>
+<span class="go">    status=&#39; &#39; user=&#39;&#39; description=&#39;initial database creation&#39;</span>
+<span class="go">  data #00000 oid=0000000000000000 size=60 class=persistent.mapping.PersistentMapping</span>
+<span class="go">Trans #00001 tid=03a2989b1f1965bb time=2013-11-07 11:07:07.288877 offset=185</span>
+<span class="go">    status=&#39; &#39; user=&#39;&#39; description=&#39;&#39;</span>
+<span class="go">  data #00000 oid=0000000000000000 size=94 class=persistent.mapping.PersistentMapping</span>
+<span class="go">  data #00001 oid=0000000000000001 size=42 class=__main__.Fruit</span>
+<span class="go">Trans #00002 tid=03a2e724b1b6af99 time=2013-11-21 10:12:41.651629 offset=449</span>
+<span class="go">    status=&#39; &#39; user=&#39;&#39; description=&#39;Rolling back!&#39;</span>
+<span class="go">  data #00000 oid=0000000000000000 size=60 class=persistent.mapping.PersistentMapping bp=03a298991c976744</span>
+<span class="go">  data #00001 oid=0000000000000001 class=undo or abort of object creation</span>
+</pre></div>
+
+
+<p>And that's all, again. If you know any other way, or you find something
+wrong with this, let me know about it.</p>
+<h2>References</h2>
+<ul>
+<li>The ZODB guide.
+    (<a href="http://www.zodb.org/en/latest/documentation/guide/transactions.html">link</a>)</li>
+<li>ZODB <code>undoInfo</code> method
+    (<a href="https://github.com/zopefoundation/ZODB/blob/6b484f8a2ce6cd627139cd6a2c8e9219ecf0ecf2/src/ZODB/UndoLogCompatible.py">link</a>)</li>
+<li>Wolfgang Schnerring post about undoing transactions in ZODB
+    (<a href="http://blog.gocept.com/2011/05/04/how-to-undo-a-transaction-with-the-zodb/">link</a>)</li>
+</ul>
+  </article>
+  <hr class="big-divider" />
+  
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_shortname = 'javiergr';
+var disqus_identifier = "2013/11/rolling-back-zodb";
+var disqus_title = "Rolling back a transaction in ZODB";
+var disqus_url = "http://javier.gr/blog/2013/11/rolling-back-zodb/";
+
+/* * * DON'T EDIT BELOW THIS LINE * * */
+(function() {
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript'; 
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>
+  Please enable JavaScript to view the 
+  <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+<a href="http://disqus.com" class="dsq-brlink">
+  comments powered by
+  <span class="logo-disqus">Disqus</span>
+</a>
+
+
+</section>
+
+  </div>
+  <footer class="main-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-6">
+          <h2>Contact me</h2>
+          <ul>
+            <li>E-Mail: <a href="mailto:bolibic@gmail.com">bolibic@gmail.com</a></li>
+            <li>Twitter: <a href="https://twitter.com/graffic">@graffic</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-6">
+          <p>Copyright © Javier Gonel 2013</p>
+          <p>Proudly powered by:</p>
+          <ul>
+            <li><a href="http://python.org">Python 3</a></li>
+            <li><a href="http://flask.pocoo.org/">Flask</a></li>
+            <li><a href="http://getbootstrap.com/">Bootstrap 3</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer><!-- /#contentinfo -->
+</body>
+
+</html>

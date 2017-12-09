@@ -1,0 +1,203 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/static/css/main.bfbdc369.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <title>This week I learned about</title>
+
+  <meta charset="utf-8" />
+  <meta name="frozen at" content="2017-12-09T11:58:10.983325" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/atom+xml"
+      href="/atom.xml" title="javier.gr blog feed" />
+  
+  
+  
+  
+
+  
+    <meta name="description" contents="CORS, EmberJS, AWS CodeDeploy, dotenv and APIs" />
+  
+
+  
+
+
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+<script>
+window.addEventListener("load", function(){
+  window.cookieconsent.initialise({
+    palette: {
+      popup: {
+        background: "#009a97",
+        text: "#fff"
+      },
+      button: {
+        background: "#eaeaea",
+        text: "#000"
+      },
+    },
+    content: {
+      message: "This website use tracking cookies for visitor analytics"
+    }
+  });
+});
+</script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-2528134-1', 'auto');
+    ga('send', 'pageview');
+  
+  </script>
+</head>
+
+<body>
+  <header class="main-header">
+    <div class="container">
+      <h2 class="header-title">
+        <a href="/">Javier Gonel</a>
+      </h2>
+      <nav>
+        <ul class="nav">
+          <li >
+            <a href="/about/">About</a>
+          </li>
+          <li  class="active">
+            <a href="/blog/">Blog</a>
+          </li>
+          <li>
+            <a href="/atom.xml"><i class="fa fa-rss"></i></a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="container main-area">
+    
+<section class="h-entry">
+  <header>
+    <h1 class="p-name entry-title">This week I learned about</h1>
+    <time pdatetime="2017-10-07">
+      <i class="glyphicon glyphicon-calendar"></i>
+      Sat 07 October 2017
+    </time>
+  </header>
+  <article class="e-content entry-content">
+    <p>The first week of October was quite full of interesting/useful things/lessons.
+Here are some of them:</p>
+<h3>Loopback.io</h3>
+<p>Besides all other goodies, I found that services at work using <a href="http://loopback.io/doc/index.html">loopback</a>
+offer a <a href="https://github.com/strongloop/loopback-component-explorer">component-explorer</a>
+where you can interact and learn more about the APIs exposed.</p>
+<p><img alt="loopback explorer" src="/blog/2017/10/this-week/loopback.explorer.png" /></p>
+<h3>Preflight requests</h3>
+<p>When you make a <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Access_control_CORS">cross-origin request</a> 
+from javascript in the browser, the browser will ask the endpoint first if the request is allowed with a <a href="https://developer.mozilla.org/en-US/docs/Glossary/Preflight_request">preflight request</a>. 
+This usually adds up a lot of time if you do it every time and have multiple 
+endpoints for a single visualization.</p>
+<p>In the front-end app, I was working, the browser was always sending those requests
+every time. You can cache the answers with the <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age">Access-Control-Max-Age</a>
+header, and I don't know why the <code>cors</code> and <code>kcors</code> library we were using had
+<code>maxAge</code> disabled by default. This is making some pages loading time almost twice.</p>
+<h3>Ember models</h3>
+<p>In EmberJS your route components can load a model. We had front-end routes like
+<code>user/application/adunit/action</code> But we were loading almost everything in the last 
+element of the route path.</p>
+<p>This leads to repeated code in the path leaves with complex <code>model()</code> hooks where
+you load many things that should be already there making the app slow. A small
+refactor made page loads feel snappier.</p>
+<h3>Too much authentication</h3>
+<p>Besides preflight requests and loading too many things, our front-end is
+personalized depending on the role. We were not caching user roles so we were
+asking the back-end on almost every page for those roles.</p>
+<h3>React dotenv</h3>
+<p>The <a href="https://github.com/facebookincubator/create-react-app/tree/master/packages/react-scripts">react-scripts</a> package in React includes <a href="https://github.com/motdotla/dotenv">dotenv</a> as a way to manage
+environment configuration through files. Last week a new <code>local</code> environment
+was created and a <code>.env.local</code> file was added. But it seems that <code>.env.local</code> has
+a special meaning in <code>dotenv</code> and it was overriding my personal <code>.env</code> file.</p>
+<p>How this happened is another lesson: someone that doesn't develop the project did
+the changes that broke the development environment. I believe working in pairs/more close with that
+person would have avoided this plus bringing a colleague in another location closer to the team.</p>
+<h3>AWS CodeDeploy long waiting times</h3>
+<p>While deploying the fix for the <code>Access-Control-Max-Age</code> backend issue. I was
+annoyed at how long it took <a href="https://aws.amazon.com/codedeploy/">AWS CodeDeply</a>.</p>
+<p><img alt="CodeDeploy timings" src="/blog/2017/10/this-week/code.deploy.png" /></p>
+<p>The <code>BlockTraffic</code> and <code>AllowTraffic</code> steps took 10 minutes from the 11 minutes
+deploy. It seems the long wait is due to health check configuration in the
+<code>Elastic Load Balancer</code> of the service: 10 checks
+every 30 seconds to raise a trigger, that's 5 minutes.</p>
+<h3>Linkerd</h3>
+<p>Our systems engineering team is setting up new infrastructure management and
+deploying system for a <a href="https://en.wikipedia.org/wiki/Greenfield_project">greenfield project</a>. One of the core
+tools is <a href="https://linkerd.io">linkerd</a> to help with service-to-service
+communication.</p>
+<h3>Learned to appreciate Nomad</h3>
+<p>Besides <code>Linkerd</code>, this new project uses almost every tool from <a href="https://www.hashicorp.com">Hashicorp</a>.
+I've used <code>Terraform</code> and <code>Packer</code> before but <a href="https://www.nomadproject.io">Nomad</a> was 
+a tool I couldn't find a use for. And this was till I saw all these tools working
+together (Kudos to Avocarrot sysengs). I still like <a href="https://kubernetes.io">Kubernetes</a>
+more as a whole, but I was able to appreciate nomad as a tool for a specific job.</p>
+  </article>
+  <hr class="big-divider" />
+  
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_shortname = 'javiergr';
+var disqus_identifier = "2017/10/this-week";
+var disqus_title = "This week I learned about";
+var disqus_url = "http://javier.gr/blog/2017/10/this-week/";
+
+/* * * DON'T EDIT BELOW THIS LINE * * */
+(function() {
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript'; 
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>
+  Please enable JavaScript to view the 
+  <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+<a href="http://disqus.com" class="dsq-brlink">
+  comments powered by
+  <span class="logo-disqus">Disqus</span>
+</a>
+
+
+</section>
+
+  </div>
+  <footer class="main-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-6">
+          <h2>Contact me</h2>
+          <ul>
+            <li>E-Mail: <a href="mailto:bolibic@gmail.com">bolibic@gmail.com</a></li>
+            <li>Twitter: <a href="https://twitter.com/graffic">@graffic</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-6">
+          <p>Copyright © Javier Gonel 2013</p>
+          <p>Proudly powered by:</p>
+          <ul>
+            <li><a href="http://python.org">Python 3</a></li>
+            <li><a href="http://flask.pocoo.org/">Flask</a></li>
+            <li><a href="http://getbootstrap.com/">Bootstrap 3</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer><!-- /#contentinfo -->
+</body>
+
+</html>

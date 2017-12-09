@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/static/css/main.bfbdc369.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <title>Python patching function globals</title>
+
+  <meta charset="utf-8" />
+  <meta name="frozen at" content="2017-12-09T11:58:11.313180" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/atom+xml"
+      href="/atom.xml" title="javier.gr blog feed" />
+  
+  
+  
+  
+
+  
+    <meta name="description" contents="Python functions references to globals and monkey patching." />
+  
+
+  
+
+
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+<script>
+window.addEventListener("load", function(){
+  window.cookieconsent.initialise({
+    palette: {
+      popup: {
+        background: "#009a97",
+        text: "#fff"
+      },
+      button: {
+        background: "#eaeaea",
+        text: "#000"
+      },
+    },
+    content: {
+      message: "This website use tracking cookies for visitor analytics"
+    }
+  });
+});
+</script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-2528134-1', 'auto');
+    ga('send', 'pageview');
+  
+  </script>
+</head>
+
+<body>
+  <header class="main-header">
+    <div class="container">
+      <h2 class="header-title">
+        <a href="/">Javier Gonel</a>
+      </h2>
+      <nav>
+        <ul class="nav">
+          <li >
+            <a href="/about/">About</a>
+          </li>
+          <li  class="active">
+            <a href="/blog/">Blog</a>
+          </li>
+          <li>
+            <a href="/atom.xml"><i class="fa fa-rss"></i></a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="container main-area">
+    
+<section class="h-entry">
+  <header>
+    <h1 class="p-name entry-title">Python patching function globals</h1>
+    <time pdatetime="2014-04-08">
+      <i class="glyphicon glyphicon-calendar"></i>
+      Tue 08 April 2014
+    </time>
+  </header>
+  <article class="e-content entry-content">
+    <p>Some days ago I found myself close to <a href="http://en.wikipedia.org/wiki/Monkey_patch">monkey patch</a> a global
+reference to a method. I wanted to modify the output of an internal method in a
+3rd party framework. Even if the framework had hooks, it didn't have the one I
+needed.</p>
+<p>Monkey patching usually is <strong>not</strong> a good solution.</p>
+<ul>
+<li>Your changes might be global.</li>
+<li>Your changes could have unexpected consequences.</li>
+<li>For sure it can be done in another way.</li>
+<li>You're binding your code to 3rd party internals.</li>
+</ul>
+<p>There was only one place where the relevant method was used, and that place
+(function) was being stored to be called later. Could I replace that stored
+function with one with the <em>same code</em> but <em>different dependencies</em>?</p>
+<h2>Python function references</h2>
+<p><a href="https://docs.python.org/3/reference/datamodel.html#index-32">Python functions</a> keep a reference to the <em>non-local</em>
+variables used in the following attributes</p>
+<ul>
+<li><code>__globals__</code> This is a reference to the module globals dict.</li>
+<li><code>__closure__</code> Variables used in the function closure.</li>
+</ul>
+<p>Let's see it with an example:</p>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">one</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="s1">&#39;one&#39;</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">three</span><span class="p">(</span><span class="n">param</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">def</span> <span class="nf">two</span><span class="p">():</span>
+<span class="gp">... </span>        <span class="k">print</span><span class="p">(</span><span class="n">one</span><span class="p">(),</span> <span class="n">param</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="n">two</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inst</span> <span class="o">=</span> <span class="n">three</span><span class="p">(</span><span class="s1">&#39;hello&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inst</span><span class="p">()</span>
+<span class="go">(&#39;one&#39;, &#39;hello&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inst</span><span class="o">.</span><span class="vm">__globals__</span>
+<span class="go">{&#39;__builtins__&#39;: &lt;module &#39;__builtin__&#39; (built-in)&gt;, </span>
+<span class="go"> &#39;three&#39;: &lt;function three at 0x109306cf8&gt;, </span>
+<span class="go"> &#39;one&#39;: &lt;function one at 0x109306c80&gt;, </span>
+<span class="go"> &#39;inst&#39;: &lt;function two at 0x109306d70&gt;, </span>
+<span class="go"> &#39;__name__&#39;: &#39;__main__&#39;, </span>
+<span class="go"> &#39;__package__&#39;: None, </span>
+<span class="go"> &#39;__doc__&#39;: None}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inst</span><span class="o">.</span><span class="vm">__closure__</span>
+<span class="go">(&lt;cell at 0x10930c600: str object at 0x10930b510&gt;,)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inst</span><span class="o">.</span><span class="vm">__closure__</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">cell_contents</span>
+<span class="go">&#39;hello&#39;</span>
+</pre></div>
+
+
+<p>These two dictionaries aren't read only (the attributes are tough). However, in
+the case of the globals dictionary any modification will apply to everyone
+using not only the method but the module.</p>
+<h2>Copying a method</h2>
+<p>We can duplicate a method and make it use a new globals dict. For example, in
+order to change the reference to the method <code>one</code> inside the method <code>two</code> to
+the <code>banana</code> method (using the previous example code):</p>
+<div class="codehilite"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">types</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span> <span class="nf">banana</span><span class="p">():</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="s1">&#39;banana&#39;</span>
+<span class="gp">...</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_globals</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="vm">__globals__</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_globals</span><span class="p">[</span><span class="s1">&#39;one&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">banana</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">patched_inst</span> <span class="o">=</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">inst</span><span class="o">.</span><span class="vm">__code__</span><span class="p">,</span> <span class="n">new_globals</span><span class="p">,</span> <span class="n">inst</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> 
+<span class="gp">... </span>    <span class="n">inst</span><span class="o">.</span><span class="vm">__defaults__</span><span class="p">,</span> <span class="n">inst</span><span class="o">.</span><span class="vm">__closure__</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">patched_inst</span><span class="p">()</span>
+<span class="go">(&#39;banana&#39;, &#39;hello&#39;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">inst</span><span class="p">()</span>
+<span class="go">(&#39;one&#39;, &#39;hello&#39;)</span>
+</pre></div>
+
+
+<h2>Summary</h2>
+<p>This still is monkey patching, even if no global reference is modified and only
+references kept in an instance are changed (no global modifications), like in a
+<em>dict</em> or a <em>list</em>. Although it allows precise surgery in some cases or till
+your pull request is accepted in your favorite open source 3rd party dependency.</p>
+  </article>
+  <hr class="big-divider" />
+  
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_shortname = 'javiergr';
+var disqus_identifier = "2014/04/python-patching-function-globals";
+var disqus_title = "Python patching function globals";
+var disqus_url = "http://javier.gr/blog/2014/04/python-patching-function-globals/";
+
+/* * * DON'T EDIT BELOW THIS LINE * * */
+(function() {
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript'; 
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>
+  Please enable JavaScript to view the 
+  <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+<a href="http://disqus.com" class="dsq-brlink">
+  comments powered by
+  <span class="logo-disqus">Disqus</span>
+</a>
+
+
+</section>
+
+  </div>
+  <footer class="main-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-6">
+          <h2>Contact me</h2>
+          <ul>
+            <li>E-Mail: <a href="mailto:bolibic@gmail.com">bolibic@gmail.com</a></li>
+            <li>Twitter: <a href="https://twitter.com/graffic">@graffic</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-6">
+          <p>Copyright © Javier Gonel 2013</p>
+          <p>Proudly powered by:</p>
+          <ul>
+            <li><a href="http://python.org">Python 3</a></li>
+            <li><a href="http://flask.pocoo.org/">Flask</a></li>
+            <li><a href="http://getbootstrap.com/">Bootstrap 3</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer><!-- /#contentinfo -->
+</body>
+
+</html>

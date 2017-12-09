@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/static/css/main.bfbdc369.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <title>Building an standalone druid hadoop indexer</title>
+
+  <meta charset="utf-8" />
+  <meta name="frozen at" content="2017-12-09T11:58:10.994748" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/atom+xml"
+      href="/atom.xml" title="javier.gr blog feed" />
+  
+  
+  
+  
+
+  
+    <meta name="description" contents="How to build a fat jar for command line indexing jobs in a hadoop cluster." />
+  
+
+  
+
+
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+<script>
+window.addEventListener("load", function(){
+  window.cookieconsent.initialise({
+    palette: {
+      popup: {
+        background: "#009a97",
+        text: "#fff"
+      },
+      button: {
+        background: "#eaeaea",
+        text: "#000"
+      },
+    },
+    content: {
+      message: "This website use tracking cookies for visitor analytics"
+    }
+  });
+});
+</script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-2528134-1', 'auto');
+    ga('send', 'pageview');
+  
+  </script>
+</head>
+
+<body>
+  <header class="main-header">
+    <div class="container">
+      <h2 class="header-title">
+        <a href="/">Javier Gonel</a>
+      </h2>
+      <nav>
+        <ul class="nav">
+          <li >
+            <a href="/about/">About</a>
+          </li>
+          <li  class="active">
+            <a href="/blog/">Blog</a>
+          </li>
+          <li>
+            <a href="/atom.xml"><i class="fa fa-rss"></i></a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="container main-area">
+    
+<section class="h-entry">
+  <header>
+    <h1 class="p-name entry-title">Building an standalone druid hadoop indexer</h1>
+    <time pdatetime="2017-12-09">
+      <i class="glyphicon glyphicon-calendar"></i>
+      Sat 09 December 2017
+    </time>
+  </header>
+  <article class="e-content entry-content">
+    <p><a href="http://druid.io">Druid</a> can do <a href="http://druid.io/docs/latest/ingestion/batch-ingestion.html">batch data ingestion</a>
+using hadoop and start indexing jobs <a href="http://druid.io/docs/latest/ingestion/command-line-hadoop-indexer.html">via command line</a>
+so you wont need an overlord/middle manager/peon. You can run those jobs using any scheduler 
+or even by hand when needed (Ex: rebuild from raw data backups). Some times the issue at hand is that
+druid and hadoop tend to not to be very good friends because they use some common libraries but in different versions.</p>
+<h2>Some Context</h2>
+<p>Where I <a href="https://www.glispa.com">work</a>, we use Druid 0.9.2, 0.11.0 with a <a href="https://www.cloudera.com/products/open-source/apache-hadoop/key-cdh-components.html">Cloudera Hadoop</a>
+cluster where we schedule jobs using <a href="http://pythonhosted.org/airflow/index.html">airflow</a>.
+We chose the <em>fat-jar</em> option so we can treat the indexers as an app to deploy and then use configuration and task
+files to index different data.</p>
+<p>The information in the <a href="http://druid.io/docs/latest/operations/other-hadoop.html">druid official documentation</a>
+about working with different versions of Hadoop put us on the right track.
+The issue was the loading order of the different dependencies druid needs. While <code>io.druid.cli.Main</code> seemed to work in the host launching
+the job, it wasn't working in the data nodes. </p>
+<p>If you see the following errors, this post might help.</p>
+<div class="codehilite"><pre><span></span>io.druid.java.util.common.ISE: Unknown module type[class io.druid.server.initialization.jetty.JettyServerModule]
+
+com.google.inject.util.Types.collectionOf(Ljava/lang/reflect/Type;)Ljava/lang/reflect/ParameterizedType
+
+com.google.common.base.Enums.getIfPresent(Ljava/lang/Class;Ljava/lang/String;)Lcom/google/common/base/Optional;
+
+java.lang.IllegalArgumentException: Invalid format: &quot;1469433667658&quot; is malformed at &quot;7658&quot;
+    at org.joda.time.format.DateTimeParserBucket.doParseMillis(DateTimeParserBucket.java:187)
+
+Error: com.fasterxml.jackson.core.JsonFactory.requiresPropertyOrdering()
+
+java.lang.NoSuchMethodError: org.apache.hadoop.yarn.api.records.ContainerId.fromString
+
+1) A binding to javax.net.ssl.SSLContext was already configured
+  at io.druid.server.emitter.HttpEmitterModule.configureSsl(HttpEmitterModule.java:70).
+  at io.druid.server.emitter.HttpEmitterModule.configureSsl(HttpEmitterModule.java:70)
+</pre></div>
+
+
+<h2>Building the fat jar</h2>
+<p>You will need a system with <strong>Oracle JDK 8</strong> and <strong>maven</strong>. We're going to modify the following files:</p>
+<ul>
+<li><code>pom.xml</code> See the changes here: 
+    <a href="https://gist.github.com/graffic/d911ee3fa413e73cd83cb61d97bb8486#file-0-10-1_properties_in_pom-xml">0.9.2 &amp; 0.10.1</a>,
+    <a href="https://gist.github.com/graffic/d911ee3fa413e73cd83cb61d97bb8486#file-0-11-0_properties_in_pom-xml">0.11.0</a>.</li>
+<li><code>TaskConfig.java</code></li>
+<li><code>sevices/pom.xml</code> See the final result here:
+    <a href="https://gist.github.com/graffic/d911ee3fa413e73cd83cb61d97bb8486#file-0-10-1_full_services_pom-xml">0.9.2 &amp; 0.10.1</a>,
+    <a href="https://gist.github.com/graffic/d911ee3fa413e73cd83cb61d97bb8486#file-0-11-0_full_services_pom-xml">0.11.0</a>.</li>
+<li><code>ParametrizedUriEmitterModule.java</code> Only for 0.11.0</li>
+</ul>
+<p>Let's start downloading druid source code and opening the root pom.xml file:</p>
+<ul>
+<li>Set  <code>&lt;hadoop.compile.version&gt;</code> to the version of hadoop CDH needs but without cdh extensions. For CDH 5.10.2 it means 2.6.0 and not 2.6.0-cdh5.10.2 or 2.6.0-mr1-cdh5.10.1.</li>
+<li>Set <code>&lt;guice.version&gt;</code> to the one CDH hadoop is using. <code>3.0</code> for CDH 5.10.2</li>
+<li>While modifying the hadoop version there is a note about updating also <code>TaskConfig.java</code> here <code>indexing-service/src/main/java/io/druid/indexing/common/config/</code></li>
+</ul>
+<p>Go to the <code>service/</code> directory and open its <code>pom.xml</code>. Add the extra extensions you need in your fat jar before the <code>&lt;!-- Test Dependencies --&gt;</code> line. For example:</p>
+<div class="codehilite"><pre><span></span><span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>io.druid.extensions<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>druid-avro-extensions<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>${project.parent.version}<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+
+<span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>io.druid.extensions.contrib<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>druid-parquet-extensions<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>${project.parent.version}<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+
+<span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>io.druid.extensions<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>druid-hdfs-storage<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>${project.parent.version}<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+
+<span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>io.druid.extensions<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>mysql-metadata-storage<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>${project.parent.version}<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+
+<span class="nt">&lt;dependency&gt;</span>
+    <span class="nt">&lt;groupId&gt;</span>io.druid.extensions<span class="nt">&lt;/groupId&gt;</span>
+    <span class="nt">&lt;artifactId&gt;</span>druid-s3-extensions<span class="nt">&lt;/artifactId&gt;</span>
+    <span class="nt">&lt;version&gt;</span>${project.parent.version}<span class="nt">&lt;/version&gt;</span>
+<span class="nt">&lt;/dependency&gt;</span>
+</pre></div>
+
+
+<p>Now it's time to configure the maven shade plugin in the previous <code>pom.xml</code>. I found 
+problems with the latest version so let's downgrade it. Find this line <code>&lt;artifactId&gt;maven-shade-plugin&lt;/artifactId&gt;</code>
+and add this line under it to set the version: <code>&lt;version&gt;2.4.3&lt;/version&gt;</code></p>
+<p>The second step in the <code>pom.xml</code> is to shade <strong>jackson</strong> and <strong>google.common</strong>.
+Find the <code>&lt;/outputs&gt;</code> line and insert the following relocations for <strong>0.9 and 0.10</strong> only (see below for 0.11):</p>
+<div class="codehilite"><pre><span></span><span class="nt">&lt;relocations&gt;</span>
+    <span class="nt">&lt;relocation&gt;</span>
+        <span class="nt">&lt;pattern&gt;</span>com.fasterxml.jackson<span class="nt">&lt;/pattern&gt;</span>
+        <span class="nt">&lt;shadedPattern&gt;</span>shade.com.fasterxml.jackson<span class="nt">&lt;/shadedPattern&gt;</span>
+    <span class="nt">&lt;/relocation&gt;</span>
+    <span class="nt">&lt;relocation&gt;</span>
+        <span class="nt">&lt;pattern&gt;</span>com.google.common<span class="nt">&lt;/pattern&gt;</span>
+        <span class="nt">&lt;shadedPattern&gt;</span>shade.com.google.common<span class="nt">&lt;/shadedPattern&gt;</span>
+    <span class="nt">&lt;/relocation&gt;</span>
+<span class="nt">&lt;/relocations&gt;</span>
+</pre></div>
+
+
+<h3>Druid 0.11</h3>
+<p>You only need one relocation in <code>services/pom.xml</code>:</p>
+<div class="codehilite"><pre><span></span><span class="nt">&lt;relocations&gt;</span>
+    <span class="nt">&lt;relocation&gt;</span>
+        <span class="nt">&lt;pattern&gt;</span>com.fasterxml.jackson<span class="nt">&lt;/pattern&gt;</span>
+        <span class="nt">&lt;shadedPattern&gt;</span>shade.com.fasterxml.jackson<span class="nt">&lt;/shadedPattern&gt;</span>
+    <span class="nt">&lt;/relocation&gt;</span>
+<span class="nt">&lt;/relocations&gt;</span>
+</pre></div>
+
+
+<p>I found an issue with SSL bindings and <em>Guice</em> comming from <code>server/src/main/java/io/druid/server/emitter/ParametrizedUriEmitterModule.java</code>. Delete the line containing <code>HttpEmitterModule.configureSsl(binder);</code> (Line 44)</p>
+<h3>Building</h3>
+<p>Go back to the root directory of the druid source a and run: <code>mvn -DskipTests -pl services -am clean install</code> to build the fat-jar.
+After the build finishes you will find it in <code>services/target/druid-services-0.??.?-selfcontained.jar</code>.</p>
+<h2>Running an index job</h2>
+<p>You will need an <code>.spec</code> file as explained in <a href="http://druid.io/docs/latest/ingestion/batch-ingestion.html">batch ingestion</a>
+and <a href="http://druid.io/docs/latest/ingestion/command-line-hadoop-indexer.html">command line hadoop indexer</a>.</p>
+<p>You can still put some configuration in config files, but we decided to pass it through
+command line parameters. Let's see an example using s3 as deep storage.</p>
+<div class="codehilite"><pre><span></span>java <span class="se">\</span>
+-Xmx512m <span class="se">\</span>
+-Duser.timezone<span class="o">=</span>UTC <span class="se">\</span>
+-Dfile.encoding<span class="o">=</span>UTF-8 <span class="se">\</span>
+-Ddruid.storage.type<span class="o">=</span>s3 <span class="se">\</span>
+-Ddruid.s3.accessKey<span class="o">=</span>KEY <span class="se">\</span>
+-Ddruid.s3.secretKey<span class="o">=</span>SECRET_KEY<span class="se">\</span>
+-Ddruid.storage.bucket<span class="o">=</span>myBucket <span class="se">\</span>
+-cp <span class="s2">&quot;</span><span class="k">$(</span>hadoop classpath<span class="k">)</span><span class="s2">:druid-service-0.11.0-selfcontained.jar&quot;</span> <span class="se">\</span>
+io.druid.cli.Main index hadoop --no-default-hadoop task.spec
+</pre></div>
+
+
+<p>That's all! We were quite focused on building a fat jar, although
+it might be easier for you to play with classpath preferences and use a normal druid build.</p>
+  </article>
+  <hr class="big-divider" />
+  
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_shortname = 'javiergr';
+var disqus_identifier = "2017/12/druid-hadoop-indexer";
+var disqus_title = "Building an standalone druid hadoop indexer";
+var disqus_url = "http://javier.gr/blog/2017/12/druid-hadoop-indexer/";
+
+/* * * DON'T EDIT BELOW THIS LINE * * */
+(function() {
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript'; 
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>
+  Please enable JavaScript to view the 
+  <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+<a href="http://disqus.com" class="dsq-brlink">
+  comments powered by
+  <span class="logo-disqus">Disqus</span>
+</a>
+
+
+</section>
+
+  </div>
+  <footer class="main-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-6">
+          <h2>Contact me</h2>
+          <ul>
+            <li>E-Mail: <a href="mailto:bolibic@gmail.com">bolibic@gmail.com</a></li>
+            <li>Twitter: <a href="https://twitter.com/graffic">@graffic</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-6">
+          <p>Copyright © Javier Gonel 2013</p>
+          <p>Proudly powered by:</p>
+          <ul>
+            <li><a href="http://python.org">Python 3</a></li>
+            <li><a href="http://flask.pocoo.org/">Flask</a></li>
+            <li><a href="http://getbootstrap.com/">Bootstrap 3</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer><!-- /#contentinfo -->
+</body>
+
+</html>

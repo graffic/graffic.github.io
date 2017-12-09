@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+    <title>Javier Gonel personal blog</title>
+    <link href="http://javier.gr/atom.xml" rel="self"/>
+    <link href="http://javier.gr/"/>
+    <updated>2017-12-09T00:00:00Z</updated>
+    <author>
+        <name>Javier Gonel</name>
+        <email>bolibic@gmail.com</email>
+        <uri>http://javier.gr</uri>
+    </author>
+    <id>http://javier.gr/atom.xml</id>
+    
+    <entry>
+        <title>Building an standalone druid hadoop indexer</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2017/12/druid-hadoop-indexer/"/>
+        <id>tag:javier.gr,2017-12-09:2017/12/druid-hadoop-indexer</id>
+        <updated>2017-12-09T00:00:00Z</updated>
+        <summary>How to build a fat jar for command line indexing jobs in a hadoop cluster.</summary>
+    </entry>
+    
+    <entry>
+        <title>SSH on a DCOS+Marathon cluster with Docker</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2017/11/dcos-ssh-docker/"/>
+        <id>tag:javier.gr,2017-11-04:2017/11/dcos-ssh-docker</id>
+        <updated>2017-11-04T00:00:00Z</updated>
+        <summary>I just wanted to test some latencies from a DCOS cluster.</summary>
+    </entry>
+    
+    <entry>
+        <title>This week I learned about</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2017/10/this-week/"/>
+        <id>tag:javier.gr,2017-10-07:2017/10/this-week</id>
+        <updated>2017-10-07T00:00:00Z</updated>
+        <summary>CORS, EmberJS, AWS CodeDeploy, dotenv and APIs</summary>
+    </entry>
+    
+    <entry>
+        <title>Downloading steam games via cli</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2017/09/steamcli/"/>
+        <id>tag:javier.gr,2017-09-10:2017/09/steamcli</id>
+        <updated>2017-09-10T00:00:00Z</updated>
+        <summary>When my internet line is not enough to download a 60GiB game.</summary>
+    </entry>
+    
+    <entry>
+        <title>Automation</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2017/09/automation/"/>
+        <id>tag:javier.gr,2017-09-09:2017/09/automation</id>
+        <updated>2017-09-09T00:00:00Z</updated>
+        <summary>Automating all the small things.</summary>
+    </entry>
+    
+    <entry>
+        <title>Friction in the real world</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2016/03/friction/"/>
+        <id>tag:javier.gr,2016-03-09:2016/03/friction</id>
+        <updated>2016-03-09T00:00:00Z</updated>
+        <summary>The force that resist motion in software development</summary>
+    </entry>
+    
+    <entry>
+        <title>Python patching function globals</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2014/04/python-patching-function-globals/"/>
+        <id>tag:javier.gr,2014-04-08:2014/04/python-patching-function-globals</id>
+        <updated>2014-04-08T00:00:00Z</updated>
+        <summary>Python functions references to globals and monkey patching.</summary>
+    </entry>
+    
+    <entry>
+        <title>Python reference leaks and objgraph</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2014/04/python-reference-leaks-and-objgraph/"/>
+        <id>tag:javier.gr,2014-04-02:2014/04/python-reference-leaks-and-objgraph</id>
+        <updated>2014-04-02T00:00:00Z</updated>
+        <summary>Finding reference leaks in python code using objgraph</summary>
+    </entry>
+    
+    <entry>
+        <title>A take on don&#39;t repeat yourself</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2014/03/a-take-on-dry/"/>
+        <id>tag:javier.gr,2014-03-22:2014/03/a-take-on-dry</id>
+        <updated>2014-03-22T00:00:00Z</updated>
+        <summary>DRY means yourself and not only code.</summary>
+    </entry>
+    
+    <entry>
+        <title>Python, green threads, fibers and go</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2014/02/python-green-threads-fibers-golang/"/>
+        <id>tag:javier.gr,2014-02-09:2014/02/python-green-threads-fibers-golang</id>
+        <updated>2014-02-09T00:00:00Z</updated>
+        <summary>The go language concurrency model and python.</summary>
+    </entry>
+    
+    <entry>
+        <title>I need a hammer. Not.</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2014/01/i-need-a-hammer-not/"/>
+        <id>tag:javier.gr,2014-01-11:2014/01/i-need-a-hammer-not</id>
+        <updated>2014-01-11T00:00:00Z</updated>
+        <summary>You assure me you “need” threads. But they are a tool and you might need something else.</summary>
+    </entry>
+    
+    <entry>
+        <title>This blog is powered by</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2014/01/static-blog-generator/"/>
+        <id>tag:javier.gr,2014-01-03:2014/01/static-blog-generator</id>
+        <updated>2014-01-03T00:00:00Z</updated>
+        <summary>I restarted my homepage, but this time using flask and flask freezer.</summary>
+    </entry>
+    
+    <entry>
+        <title>Rolling back a transaction in ZODB</title>
+        <category term="blog" />
+        <link href="http://javier.gr/blog/2013/11/rolling-back-zodb/"/>
+        <id>tag:javier.gr,2013-11-21:2013/11/rolling-back-zodb</id>
+        <updated>2013-11-21T00:00:00Z</updated>
+        <summary>Different ways to roll back a transaction in ZODB using file storage.</summary>
+    </entry>
+    
+</feed>

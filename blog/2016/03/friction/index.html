@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/static/css/main.bfbdc369.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <title>Friction in the real world</title>
+
+  <meta charset="utf-8" />
+  <meta name="frozen at" content="2017-12-09T11:58:10.842568" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/atom+xml"
+      href="/atom.xml" title="javier.gr blog feed" />
+  
+  
+  
+  
+
+  
+    <meta name="description" contents="The force that resist motion in software development" />
+  
+
+  
+
+
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+<script>
+window.addEventListener("load", function(){
+  window.cookieconsent.initialise({
+    palette: {
+      popup: {
+        background: "#009a97",
+        text: "#fff"
+      },
+      button: {
+        background: "#eaeaea",
+        text: "#000"
+      },
+    },
+    content: {
+      message: "This website use tracking cookies for visitor analytics"
+    }
+  });
+});
+</script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-2528134-1', 'auto');
+    ga('send', 'pageview');
+  
+  </script>
+</head>
+
+<body>
+  <header class="main-header">
+    <div class="container">
+      <h2 class="header-title">
+        <a href="/">Javier Gonel</a>
+      </h2>
+      <nav>
+        <ul class="nav">
+          <li >
+            <a href="/about/">About</a>
+          </li>
+          <li  class="active">
+            <a href="/blog/">Blog</a>
+          </li>
+          <li>
+            <a href="/atom.xml"><i class="fa fa-rss"></i></a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="container main-area">
+    
+<section class="h-entry">
+  <header>
+    <h1 class="p-name entry-title">Friction in the real world</h1>
+    <time pdatetime="2016-03-09">
+      <i class="glyphicon glyphicon-calendar"></i>
+      Wed 09 March 2016
+    </time>
+  </header>
+  <article class="e-content entry-content">
+    <p>Reading <a href="http://www.leanessays.com/2015/08/friction.html">this article</a> by <a href="http://www.poppendieck.com">Mary Poppendieck</a> about friction in the software industry made me look back to those times where things weren't going as smooth as one would like. That problem had a name: <strong>friction</strong>. Let me share with you some of those moments.</p>
+<h2>Code producer-consumer</h2>
+<p>There's a team that produces code and other team that consumes that code. The exposed code surface becomes a friction area.</p>
+<p>Two teams working with different goals solve problems in a different way. One team is assigned the task of creating an API or <em>core</em> libraries. Their focus is to keep those libraries clean, extendable, with many features and while doing something new (because if not they could have used existing libraries).</p>
+<p>On the other side, the team using that code to solve business problems not only they don't need all those fancy features but they have a difficult time adapting the idealized utilities to the real world. They're not allowed to change them(another team is doing it) plus they have very few knowledge if they wanted to.</p>
+<p>Both teams get angry/pissed off at each other:</p>
+<ul>
+<li><strong>Team A</strong>: they don't appreciate our work and the care we've put on that. They don't put time to understand the mechanics, they're lazy.</li>
+<li><strong>Team B</strong>: they don't know what are we dealing with. Why do we have to deal with their toy and not solve it by ourselves.</li>
+</ul>
+<p>Have you tried to make those teams <em>full-stack</em> by having them eating their own dog food?  Having your teams being able to write and decide about the tools they use to solve the business need at hand so they are fully empowered.</p>
+<p>People working in a code base know about the problems it has (be it new or legacy). Give them the space to scratch that itch and you will get a great motivated <em>scratch</em>.</p>
+<p>At the same times this enables incremental improvements by scratching one itch here and there, instead of waiting for the new library or the new engine to come out to understand that it doesn't solve the problem.</p>
+<h2>Shared artifacts</h2>
+<p>In every system there are parts that are common or reused by others. These libraries, APIs or even other system expose a shared area that is usually a source of friction.</p>
+<h3>Shared database</h3>
+<p>One of the biggest issues I've seen is a shared database system. It becomes the center of the world because every system wants to store their data there: It is just an ip and a password.</p>
+<p>Each system has its own needs. That's the first hint to start looking at what the business requires and not at what we have right now installed. Although in the end an entire database is shared because it we want only one source of authority for many things.</p>
+<p>If your business sell cars, the data related to a car is different depending on who is using that data: the factory, the show room, the sales person. Imagine the development units fighting on how to shape the car entity for each one. Plus the synchronization needed to release those changes in the data to all the involved systems.</p>
+<p>If each system uses their own data storage (even if it is the same technology) and decides about the data they store, the friction is reduced. And for data that is stored in other system they just need to know which system is the source of authority of that data.</p>
+<p>So a car might share the frame number in all the storages being the factory system the one that is the source of authority.</p>
+<p>Also if each system to decide what technology they need they can find something that serves better their needs: SQL, key-value, etc.</p>
+<h3>Shared core system</h3>
+<p>A big bunch of code becomes the center of the system's universe. Every benefit and problem is related to that piece of code.</p>
+<p>Perhaps it was created by those <em>code producers</em> or it evolved from the early stages of a system and now it is being used in every other system because "it's the way". It defines almost every application and it's one size that should fit everybody.</p>
+<p>Not many people are allowed to change the shared core, have the knowledge to change it or want to take the risk to change it.</p>
+<p>As before, the needs for one system shouldn't impose restrictions in the next one. Some parts might be equal. Just those very specific parts that usually have clear goals.</p>
+<p>It is very different to share a serialization protocol library than an entire REST API system with included database. Picking just the needed parts helps reducing the friction area.</p>
+<p>Those small parts are also easy to develop and improve by many teams because their scope is so small that everybody can understand and there is not much space for different needs or over-engineering. As you could easily create another library for other needs or build on that small piece.</p>
+<h2>The new version</h2>
+<p>Replacing a big system by the new faster, modern big system that will solve almost all the problems the old system has.</p>
+<p>Mary did a good research pointing out the new digital policies in UK and USA based on Estonia experiences. Small teams dealing directly with the users. Creating many small applications or growing a small one step by step.</p>
+<p>In the same way the UK failed to replace their old UK National Health system. Your next new version of the old system will fail. But this doesn't mean that you have to keep your old systems as they are.</p>
+<p>Delivering software in small increments and slowly taking over the old application can help. But don't forget to remove intermediaries in the process or you might end up having a new version that is not what is needed.</p>
+<h2>Closing</h2>
+<p>For me friction has become an important point to take into account into a decision. Besides good or bad based on what each one involved would think is better. How much friction does it create? and who will suffer it?</p>
+  </article>
+  <hr class="big-divider" />
+  
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_shortname = 'javiergr';
+var disqus_identifier = "2016/03/friction";
+var disqus_title = "Friction in the real world";
+var disqus_url = "http://javier.gr/blog/2016/03/friction/";
+
+/* * * DON'T EDIT BELOW THIS LINE * * */
+(function() {
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript'; 
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>
+  Please enable JavaScript to view the 
+  <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+<a href="http://disqus.com" class="dsq-brlink">
+  comments powered by
+  <span class="logo-disqus">Disqus</span>
+</a>
+
+
+</section>
+
+  </div>
+  <footer class="main-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-6">
+          <h2>Contact me</h2>
+          <ul>
+            <li>E-Mail: <a href="mailto:bolibic@gmail.com">bolibic@gmail.com</a></li>
+            <li>Twitter: <a href="https://twitter.com/graffic">@graffic</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-6">
+          <p>Copyright © Javier Gonel 2013</p>
+          <p>Proudly powered by:</p>
+          <ul>
+            <li><a href="http://python.org">Python 3</a></li>
+            <li><a href="http://flask.pocoo.org/">Flask</a></li>
+            <li><a href="http://getbootstrap.com/">Bootstrap 3</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer><!-- /#contentinfo -->
+</body>
+
+</html>

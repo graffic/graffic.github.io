@@ -1,0 +1,3 @@
+user-agent: *
+
+sitemap: http://javier.gr/sitemap.xml

@@ -1,0 +1,171 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/static/css/main.bfbdc369.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <title>Downloading steam games via cli</title>
+
+  <meta charset="utf-8" />
+  <meta name="frozen at" content="2017-12-09T11:58:10.974798" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/atom+xml"
+      href="/atom.xml" title="javier.gr blog feed" />
+  
+  
+  
+  
+
+  
+    <meta name="description" contents="When my internet line is not enough to download a 60GiB game." />
+  
+
+  
+
+
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+<script>
+window.addEventListener("load", function(){
+  window.cookieconsent.initialise({
+    palette: {
+      popup: {
+        background: "#009a97",
+        text: "#fff"
+      },
+      button: {
+        background: "#eaeaea",
+        text: "#000"
+      },
+    },
+    content: {
+      message: "This website use tracking cookies for visitor analytics"
+    }
+  });
+});
+</script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-2528134-1', 'auto');
+    ga('send', 'pageview');
+  
+  </script>
+</head>
+
+<body>
+  <header class="main-header">
+    <div class="container">
+      <h2 class="header-title">
+        <a href="/">Javier Gonel</a>
+      </h2>
+      <nav>
+        <ul class="nav">
+          <li >
+            <a href="/about/">About</a>
+          </li>
+          <li  class="active">
+            <a href="/blog/">Blog</a>
+          </li>
+          <li>
+            <a href="/atom.xml"><i class="fa fa-rss"></i></a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="container main-area">
+    
+<section class="h-entry">
+  <header>
+    <h1 class="p-name entry-title">Downloading steam games via cli</h1>
+    <time pdatetime="2017-09-10">
+      <i class="glyphicon glyphicon-calendar"></i>
+      Sun 10 September 2017
+    </time>
+  </header>
+  <article class="e-content entry-content">
+    <p>With almost no bandwidth at home, I needed a way to download <code>DOOM</code> that didn't involve blocking the home internet line for two days. Besides finding a friend with a good internet line, I also found that using <a href="https://developer.valvesoftware.com/wiki/SteamCMD">steamcmd</a> you can use any computer to download steam games. No need to bring your gaming rig to your friend house to download the game, they can download it for you or you can use a laptop without steam.</p>
+<h2>Downloading the game</h2>
+<ol>
+<li>Install <code>steamcmd</code> following the <a href="https://developer.valvesoftware.com/wiki/SteamCMD#Downloading_SteamCMD">official instructions</a>.</li>
+<li>Open it and log-in with your username and password: <code>login username password</code></li>
+<li>Set the operating system and  bitness (32/64 bits) for the game. For example, I downloaded <code>DOOM</code> from a mac for a <code>64bit Windows</code></li>
+<li><code>@sSteamCmdForcePlatformType windows</code></li>
+<li><code>@sSteamCmdForcePlatformBitness 64</code></li>
+<li>Choose a folder name: <code>force_install_dir ./DOOM</code></li>
+<li>Go to https://steamdb.info/ and find the <code>APPID</code> of the game you want to download.</li>
+<li>Start the download: <code>app_update 379720 validate</code></li>
+</ol>
+<p>This will generate a folder called <code>DOOM</code> with the game inside and one extra folder: <code>steamapps</code> where an <code>appmanifest_xxx.vcf</code> file will be created. We will use that file later to add the game to the steam library.</p>
+<h2>Installing the game back at your gaming station</h2>
+<ol>
+<li>Close steam.</li>
+<li>Find your steam folder.</li>
+<li>Copy the game where the other games are. Usually the <code>steamapps\common</code> folder. Leave the name of the folder unchanged</li>
+<li>From the game, you've just copied, move the appmanifest file to the <code>steamapps</code> folder (Where other manifest files are).</li>
+<li>Open steam and you should see your game as installed in your library.</li>
+<li>You can verify that your game is ok following <a href="https://support.steampowered.com/kb_article.php?ref=2037-QEUH-3335">these instructions</a>.</li>
+</ol>
+  </article>
+  <hr class="big-divider" />
+  
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_shortname = 'javiergr';
+var disqus_identifier = "2017/09/steamcli";
+var disqus_title = "Downloading steam games via cli";
+var disqus_url = "http://javier.gr/blog/2017/09/steamcli/";
+
+/* * * DON'T EDIT BELOW THIS LINE * * */
+(function() {
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript'; 
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>
+  Please enable JavaScript to view the 
+  <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+<a href="http://disqus.com" class="dsq-brlink">
+  comments powered by
+  <span class="logo-disqus">Disqus</span>
+</a>
+
+
+</section>
+
+  </div>
+  <footer class="main-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-6">
+          <h2>Contact me</h2>
+          <ul>
+            <li>E-Mail: <a href="mailto:bolibic@gmail.com">bolibic@gmail.com</a></li>
+            <li>Twitter: <a href="https://twitter.com/graffic">@graffic</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-6">
+          <p>Copyright © Javier Gonel 2013</p>
+          <p>Proudly powered by:</p>
+          <ul>
+            <li><a href="http://python.org">Python 3</a></li>
+            <li><a href="http://flask.pocoo.org/">Flask</a></li>
+            <li><a href="http://getbootstrap.com/">Bootstrap 3</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer><!-- /#contentinfo -->
+</body>
+
+</html>

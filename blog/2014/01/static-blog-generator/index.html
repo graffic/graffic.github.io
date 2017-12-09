@@ -1,0 +1,263 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="stylesheet" href="/static/css/main.bfbdc369.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+  <title>This blog is powered by</title>
+
+  <meta charset="utf-8" />
+  <meta name="frozen at" content="2017-12-09T11:58:11.215880" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="alternate" type="application/atom+xml"
+      href="/atom.xml" title="javier.gr blog feed" />
+  
+  
+  
+  
+
+  
+    <meta name="description" contents="I restarted my homepage, but this time using flask and flask freezer." />
+  
+
+  
+
+
+  <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+<script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+<script>
+window.addEventListener("load", function(){
+  window.cookieconsent.initialise({
+    palette: {
+      popup: {
+        background: "#009a97",
+        text: "#fff"
+      },
+      button: {
+        background: "#eaeaea",
+        text: "#000"
+      },
+    },
+    content: {
+      message: "This website use tracking cookies for visitor analytics"
+    }
+  });
+});
+</script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+  
+    ga('create', 'UA-2528134-1', 'auto');
+    ga('send', 'pageview');
+  
+  </script>
+</head>
+
+<body>
+  <header class="main-header">
+    <div class="container">
+      <h2 class="header-title">
+        <a href="/">Javier Gonel</a>
+      </h2>
+      <nav>
+        <ul class="nav">
+          <li >
+            <a href="/about/">About</a>
+          </li>
+          <li  class="active">
+            <a href="/blog/">Blog</a>
+          </li>
+          <li>
+            <a href="/atom.xml"><i class="fa fa-rss"></i></a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="container main-area">
+    
+<section class="h-entry">
+  <header>
+    <h1 class="p-name entry-title">This blog is powered by</h1>
+    <time pdatetime="2014-01-03">
+      <i class="glyphicon glyphicon-calendar"></i>
+      Fri 03 January 2014
+    </time>
+  </header>
+  <article class="e-content entry-content">
+    <p>After some years using <a href="http://wordpress.org">Wordpress</a>, and some attempts at static blog generators
+I've switched to <a href="http://flask.pocoo.org">Flask</a>. If you want to know why, keep reading. If you
+just want to see the code, <a href="https://github.com/graffic/javiergr">click here</a>.</p>
+<h2>Dynamic blog generators.</h2>
+<p>The first versions were based on <a href="http://wordpress.org">Wordpress</a>. It had some things I
+didn't like much:</p>
+<ul>
+<li>Keeping an eye on wordpress vulnerabilities and wordpress plugin
+  vulnerabilities.</li>
+<li>All my posts were almost the same but Wordpress way of editing posts made me
+  fight even for simple things with the WYSIWYG editor.</li>
+<li>Wordpress templates are easy, but are based on what Wordpress thinks a template should be.
+  You might want to organize things in another way: different problems, different solutions.</li>
+</ul>
+<p>I could have:</p>
+<ul>
+<li>Used the hosted wordpress to forget about version updates.</li>
+<li>Bought a personalized wordpress template.</li>
+<li>Swallow it and accept the editor (or even try a new one).</li>
+</ul>
+<p>It was clear for me that I wanted more control about my homepage.</p>
+<h2>Static blog/page generators</h2>
+<p>Static blog generators give you almost the same flexibility as dynamic ones.
+These days is common to see many blogs moved to
+<a href="http://octopress.org">Octopress</a>/<a href="http://jekyllrb.com">Jekyll</a>. And even other good tools like
+<a href="http://middlemanapp.com">Middleman</a> for full static sites.</p>
+<p>I looked for something more... python. Again, there are a lot of static site
+generators in python. I ended up trying two:</p>
+<ul>
+<li><a href="http://getnikola.com">Nikola</a></li>
+<li><a href="http://blog.getpelican.com">Pelican</a></li>
+</ul>
+<p>At the time I checked <a href="http://getnikola.com">Nikola</a> it needed some extra plugins to do what
+I wanted but the code was clean. <a href="http://blog.getpelican.com">Pelican</a> was ready to use, but code
+was a bit messy. The future of Nikola seems to have as many plugins as pelican,
+and the future of pelican to have as good code base as Nikola. Good projects to
+keep an eye on.</p>
+<p>In both cases you should follow the tools and structure defined by the engines.
+If you want to do something more, you should use a plugin (Pelican had all I
+needed). If you want to do something different, you need to read the code.</p>
+<p>Every tool enforces some patterns. It's something good to start with if you
+don't know where to start.  But web frameworks don't impose so many things
+(only some).  General purpose web frameworks leave you enough space to build
+almost any web site/application you want.</p>
+<p>Also my old friend <a href="http://www.jcea.es">@jcea</a> said: If you build your site well enough
+you can always <code>wget</code> it and make it static.</p>
+<h2>Flask</h2>
+<p>Another friend, <a href="http://www.oscarmlage.com">@oscarmlage</a>, told me about his blog engine running with
+flask: <a href="https://bitbucket.org/r0sk/flask-htmlblog">flask-htmlblog</a> and other very interesting flask plugins.</p>
+<p>Flask had all the plugins I needed, and also has a “wget” plugin called freezer.
+It is simple to use and uses jinja2 (like pelican). I had the site running with
+pelican, it took me a couple hours to move it to flask.  </p>
+<p>Tools:</p>
+<ul>
+<li><a href="http://flask.pocoo.org">Flask</a>: All the web mumbo-jumbo.</li>
+<li><a href="http://pythonhosted.org/Flask-FlatPages/">Flask Flat Pages</a>: Use markdown files as sources</li>
+<li><a href="http://pythonhosted.org/Frozen-Flask/">Frozen Flask</a>: Dump the site as static HTML pages.</li>
+<li><a href="http://webassets.readthedocs.org/en/latest/">Webassets</a> and its <a href="http://elsdoerfer.name/docs/flask-assets/">flask adapter</a>: Minify/clean less, css, and javascript
+  assets.</li>
+</ul>
+<p>The rest is some code for the views and the project structure. Check the <a href="https://github.com/graffic/javiergr">source</a>!.</p>
+<h2>Problems found</h2>
+<h3>Python 3.</h3>
+<p>Some libraries needed 2to3. I hope to have time to commit back the python 3 compatibility.</p>
+<h3>Special static files</h3>
+<p>There are some static files like robots.txt, humans.txt and even an .htaccess needed
+for apache. For these files I added an extra step after freezing the site.</p>
+<div class="codehilite"><pre><span></span><span class="k">def</span> <span class="nf">copy_extra</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Copy files from extra folder to the root&quot;&quot;&quot;</span>
+    <span class="n">extra_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">APP</span><span class="o">.</span><span class="n">root_path</span><span class="p">,</span> <span class="s1">&#39;extra&#39;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">extra_path</span><span class="p">):</span>
+        <span class="n">src</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">extra_path</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+        <span class="n">dst</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">FREEZER</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+        <span class="n">shutil</span><span class="o">.</span><span class="n">copyfile</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Also in the freezing process (generating the HTML files), I need to copy some
+files from one bower component: bootstrap fonts.</p>
+<div class="codehilite"><pre><span></span><span class="n">FREEZER</span> <span class="o">=</span> <span class="n">Freezer</span><span class="p">(</span><span class="n">APP</span><span class="p">,</span> <span class="n">with_static_files</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+<span class="nd">@FREEZER.register_generator</span>
+<span class="k">def</span> <span class="nf">bootstrap_fonts</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Bootstrap static files included in the css&quot;&quot;&quot;</span>
+    <span class="n">fonts_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;bower_components&#39;</span><span class="p">,</span> <span class="s1">&#39;bootstrap&#39;</span><span class="p">,</span> <span class="s1">&#39;fonts&#39;</span><span class="p">)</span>
+    <span class="n">fonts</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">APP</span><span class="o">.</span><span class="n">static_folder</span><span class="p">,</span> <span class="n">fonts_dir</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">listdir</span><span class="p">(</span><span class="n">fonts</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="s1">&#39;static&#39;</span><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;filename&#39;</span><span class="p">:</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">fonts_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">)}</span>
+</pre></div>
+
+
+<h3>Image handling</h3>
+<p>The site needs to notify the freezer that an image in a page/post is being used.
+Images are inserted via markdown, so a <a href="https://github.com/graffic/javiergr/blob/master/javiergr/md_extensions.py#L7">markdown plugin</a> did the
+job by running <code>url_for</code> in each image in the markdown content.</p>
+<p>There is an extra route to serve those images from the folder containing
+the blog post.</p>
+<div class="codehilite"><pre><span></span><span class="nd">@APP.route</span><span class="p">(</span><span class="s1">&#39;/blog/&lt;path:path&gt;/&lt;string:filename&gt;&#39;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">flat_page_content</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;flat pages content (static) rendering&quot;&quot;&quot;</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="n">PAGES</span><span class="o">.</span><span class="n">get_or_404</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">APP</span><span class="o">.</span><span class="n">root_path</span><span class="p">,</span> <span class="s1">&#39;blog&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">send_from_directory</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span>
+</pre></div>
+
+
+<h2>Next steps</h2>
+<h3>Disqus.</h3>
+<p>I wanted to make the comments available as static content for search engine
+crawlers. At the time of writing I have a pending <a href="https://github.com/disqus/disqus-python/pull/6">pull request</a> in the disqus
+API bindings for python in order to add python 3.3 support (and tests). </p>
+<h3>ZODB.</h3>
+<p>The flask-ZODB plugin didn't want to work with python 3. So I created 
+<a href="https://github.com/graffic/javiergr/blob/master/javiergr/zodb.py">something similar</a>. I must say that Flask can be extended really easily, Kudos!</p>
+  </article>
+  <hr class="big-divider" />
+  
+
+<div id="disqus_thread"></div>
+<script type="text/javascript">
+var disqus_shortname = 'javiergr';
+var disqus_identifier = "2014/01/static-blog-generator";
+var disqus_title = "This blog is powered by";
+var disqus_url = "http://javier.gr/blog/2014/01/static-blog-generator/";
+
+/* * * DON'T EDIT BELOW THIS LINE * * */
+(function() {
+  var dsq = document.createElement('script');
+  dsq.type = 'text/javascript'; 
+  dsq.async = true;
+  dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+(document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>
+  Please enable JavaScript to view the 
+  <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a>
+</noscript>
+<a href="http://disqus.com" class="dsq-brlink">
+  comments powered by
+  <span class="logo-disqus">Disqus</span>
+</a>
+
+
+</section>
+
+  </div>
+  <footer class="main-footer">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-6">
+          <h2>Contact me</h2>
+          <ul>
+            <li>E-Mail: <a href="mailto:bolibic@gmail.com">bolibic@gmail.com</a></li>
+            <li>Twitter: <a href="https://twitter.com/graffic">@graffic</a></li>
+          </ul>
+        </div>
+        <div class="col-sm-6">
+          <p>Copyright © Javier Gonel 2013</p>
+          <p>Proudly powered by:</p>
+          <ul>
+            <li><a href="http://python.org">Python 3</a></li>
+            <li><a href="http://flask.pocoo.org/">Flask</a></li>
+            <li><a href="http://getbootstrap.com/">Bootstrap 3</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </footer><!-- /#contentinfo -->
+</body>
+
+</html>
